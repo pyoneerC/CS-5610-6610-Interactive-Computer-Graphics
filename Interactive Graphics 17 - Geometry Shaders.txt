@@ -1,43 +1,43 @@
 Vertex Data /> Vertex Shader (vertices with connection) /> GEOMETRY SHADER /> Rasterizer (fragments, transformations) /> Fragment shader (final colors)
 
-Geometry shader input is vertex shader, output is rasterizer. Geometry shader can do whatever, can create or drop vertices, forming a primitive. Can output unrealted things.
-Vertex shaders process vertices one by one, geometry shaders process vertices in chunks, its gonna get all at the same time. It will be seeing the entire primitive.
-We can paralellize the vertex shader, thats why we dont skip 'em, because geometry shader would get 1 at a time without vertex shaders. They will output the transformed vertices to the geometry shader. Geometry shader will output the final vertices to the rasterizer.
+Geometry shader input is vertex shader, output is rasterizer. Geometry shaders can do whatever, create or drop vertices, forming a primitive. Can output unrelated things.
+Vertex shaders process vertices one by one, geometry shaders process vertices in chunks, it's gonna get all at the same time. It will be seeing the entire primitive.
+We can parallelize the vertex shader, that's why we don't skip 'em, because the geometry shader would get 1 at a time without vertex shaders. They will output the transformed vertices to the geometry shader. Geometry shader will output the final vertices to the rasterizer.
 
 Vertex shader: parallel, one by one.
-Geometry shader: combine information of vertices, process them in chunks. Has access to all vertices, can transform them, can create new ones, can drop them. for generting data on the fly.
+Geometry shader: combine information of vertices, process them in chunks. Has access to all vertices, can transform them, can create new ones, can drop them. for generating data on the fly.
 point, line (2 verts), triangle (3), primitives, line with adjacency, strip with adjacency /> Geometry Shader /> Possible outputs: Points, Line Strips, Triangle Strips. Get triangle and output point, only one of these types can be outputted.
 
-line loop is like a cube. lines adjacency types for geometry shaders is multiple vertices per line. like multiple lines segments in one line. triangles can be used as inputs.
-triangles adjacency has niegborhing vertices. like sending 3 triangles more each formed by each limit of the triangle. triangles adjacency and strupadjacency. gs accept triangles? 3 verts at a time.
+The line loop is like a cube. lines adjacency types for geometry shaders are multiple vertices per line. like multiple line segments in one line. triangles can be used as inputs.
+triangles adjacency has neighboring vertices. like sending 3 triangles more each formed by each limit of the triangle. triangles adjacency and strip adjacency. gs accept triangles? 3 verts at a time.
 
 lines_adjacency      =    4 verts
 triagles_adjacency   =    6 verts
 
-layout (triangles) in; //3 vertices are important, not the triangle itself beacuse output is independent. send 1 vert? point. send 2 verts? lines...
+layout (triangles) in; //3 vertices are important, not the triangle itself because output is independent. send 1 vert? point. send 2 verts? lines...
 layout (line_strip, max_vertices = 5) out;
 
 in gl_PerVertex {               // input from vertex shader. SAO.
     vec4 gl_Position;           // position of the vertex
     float gl_PointSize;         // OPTIONAL: size of the point
     float gl_ClipDistance[];    // OPTIONAL: clipping distance
-} gl_in[];                      // geometry shader input. array of vertex data. im getting multiple vertices in the geometry shader.
+} gl_in[];                      // geometry shader input. array of vertex data. I'm getting multiple vertices in the geometry shader.
 
 out gl_PerVertex {              // output to rasterizer. SOA.
     vec4 gl_Position;           // position of the vertex
     float gl_PointSize;         // OPTIONAL: size of the point
     float gl_ClipDistance[];    // OPTIONAL: clipping distance
-} gl_out[];                     // geometry shader output. array of vertex data. im sending multiple vertices to the rasterizer.
+} gl_out[];                     // geometry shader output. array of vertex data. I'm sending multiple vertices to the rasterizer.
 
 // we could output oher data
 
-// in is sent by previous stage, out is sent to the next stage. we can output multiple vertices, we can output different types of primitives.
+// in is sent by the previous stage, out is sent to the next stage. we can output multiple vertices, we can output different types of primitives.
 
 in vec2 texcoord[];             // input texcoord from vertex shader, vertex shader sayed out texcoord, we are getting it here. ARRAY OF VEC2.
 out vec2 texcoord_gs;         // output texcoord to rasterizer from geometry shader, we are sending it to the next stage. SINGLE VEC2. we put a value to this in main(), like everything.
 uniform float scale;            // uniform variable, we can use it in the geometry shader. can get textures. powerfull.
 
-Geometry shader instancing: having two different geometry shaders. we can use the same vertex shader, but different geometry shaders, different outputs, parallelism. we can use the same vertex shader for different geometry shaders. get the same input, but different outputs.
+Geometry shader instancing: having two different geometry shaders. We can use the same vertex shader, but different geometry shaders, different outputs, parallelism. We can use the same vertex shader for different geometry shaders. get the same input, but different outputs.
 
 layout (points, invocations = 2) in; // 2 instances of the geometry shader. 2 different geometry shaders. 2 different outputs. 2 different invocations.
 we will have invocation id
@@ -48,11 +48,11 @@ if (gl_InvocationID == 0) {         // first instance of the geometry shader
     // do something else
 }
 
-we could subdivide in the geometry shader. more efficiency. we could LOD. SUBDIVISION IS BETTER TO DO IN THE TESSALATION SHADER. we could do it in the geometry shader, but its better to do it in the tessalation shader. THIS IS THE PLACE TO SUBDIVIDE. WITHOUT USING TESSALATION WOULD BE QUITE EXPENSIVE. generating data on the fly.
+we could subdivide in the geometry shader. more efficiency. we could LOD. SUBDIVISION IS BETTER TO DO IN THE TESSELATION SHADER. we could do it in the geometry shader, but it's better to do it in the tesselation shader. THIS IS THE PLACE TO SUBDIVIDE. WITHOUT USING TESSELLATION WOULD BE QUITE EXPENSIVE. generating data on the fly.
 
-gl_InvocationID is the id of the instance of the geometry shader. STATIC ACROSS GEOMETRY SHADERS. 3 edges of triangles, 3 invocations, will run on paraller
+gl_InvocationID is the id of the instance of the geometry shader. STATIC ACROSS GEOMETRY SHADERS. 3 edges of triangles, 3 invocations, will run on parallel
 
-gl_Position = gl_in[ gl_InvocationID ].gl_Position; // use it like an int! first execution is outputting a line segment using vertex 0, second execution (invocation) is outputting a line segment using vertex 1.
+gl_Position = gl_in[ gl_InvocationID ].gl_Position; // use it like an int! First execution is outputting a line segment using vertex 0, second execution (invocation) is outputting a line segment using vertex 1.
 EmitVertex(); // send the vertex to the rasterizer. output.
 gl_Position = gl_in[ gl_InvocationID + 1 ].gl_Position;
 // first invocation will output a line segment using vertex 0 and 1, second invocation will output a line segment using vertex 1 and 2!!!!!!!!!! :D
@@ -67,16 +67,16 @@ void main() {
     //EndPrimitive();                     // end the line strip. output. final.
 
 
-    //gl_Position = gl_in[2].gl_Position; // copy the third vertex > 2 line segments because line strip, not loop. we would have to reemit the first vertex so it closes the loop.
+    //gl_Position = gl_in[2].gl_Position; // copy the third vertex > 2 line segments because of the line strip, not loop. we would have to remit the first vertex so it closes the loop.
     //EmitVertex();                       // send the vertex to the rasterizer. output.
 
     //gl_Position = (gl_in[0].gl_Position + gl_in[2].gl_Position) * 0.5; // average of the first and third vertex. new vertex.
     //EmitVertex();                       // send the vertex to the rasterizer. output.
 
     EndPrimitive();                     // end the line strip. output. final. // will output two line strips, we aren't passing the max-vertices (5) so it will output 2 line strips.
-                                        // endprimitive will be called after the last vertex is emitted. if we dont call it, it will be called automatically, but we should call it explicitly.
+                                        // endprimitive will be called after the last vertex is emitted. if we don't call it, it will be called automatically, but we should call it explicitly.
 }
 
-fragment shader will recieve the output of the rasterizer. the interpolated value.
+fragment shader will receive the output of the rasterizer. the interpolated value.
 
 Triangle (3 vertex) > Vertex Shader > Geometry Shader > Line (2 verts) (outputting 1st and 2nd vertex only from triangle)

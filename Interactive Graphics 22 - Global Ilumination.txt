@@ -1,29 +1,29 @@
 rendering equation: integral over all directions (light sources) in the hemisphere * geometry term * brdf -> reflected light towards our camera
 
-global ilumination: direct lightning (easier to compute) rendering eq + indirect lightning(includes reflections, bounces,etc.) rendering equation. separate them for using different algorithms.
+global illumination: direct lightning (easier to compute) rendering eq + indirect lightning(includes reflections, bounces,etc.) rendering equation. separate them for using different algorithms.
 
-1 light source? no more integral, or if theres multiple, we do summation instead of integral. Integral used for calculation from ALL directions.
+1 light source? no more integral, or if there's multiple, we do summation instead of integral. Integral used for calculation from ALL directions.
 
-color bleeding is an effect of global illumination (indirect lightninh). light bounces off of objects and changes their color. (red wall next to white wall, white wall will have a red tint). realistic. more bounces,
-more lightning and more color bleeding, light energy becones more weak as it gets absorbed by objects. more bounces, more subtle the effect. 4-5 bounces is enough for realistic effect and effective. 4-12th bounce almost nothing. 
+color bleeding is an effect of global illumination (indirect lightning). light bounces off of objects and changes their color. (red wall next to white wall, white wall will have a red tint). realistic. more bounces,
+more lightning and more color bleeding, light energy becomes more weak as it gets absorbed by objects. more bounces, more subtle the effect. 4-5 bounces is enough for realistic effect and effectiveness. 4-12th bounce almost nothing. 
 0 to 1 is massive, 1 to 2 is okay, 2 to 3 is subtle, 3 to 4 is barely noticeable...
 
-diffuse surfaces: few bounces with weak energy. need less bounces to get realistic effect.
-shinny specular surfaces: more bounces with strong energy. need more bounces to get realistic effect.
+diffuse surfaces: few bounces with weak energy. need less bounces to get a realistic effect.
+shiny specular surfaces: more bounces with strong energy. need more bounces to get a realistic effect.
 
 radiosity: global illumination algorithm. calculates the light energy that is reflected off of surfaces and bounces around the scene. (light energy is not lost, it is conserved).
-radiosity: divides the scene into n number of pieces. computes form factors between each piece. form factor: how much light energy is transferred between 2 surfaces. 
-compute how much other surfaces are affected by the light comming to one surfaces, those reflected will receieve more light energy. includes multiple bounces. avoids back and forth calculations of reflections. 
+radiosity: divides the scene into a number of pieces. computer form factors between each piece. form factor: how much light energy is transferred between 2 surfaces. 
+compute how much other surfaces are affected by the light coming to one surface, those reflected will receive more light energy. includes multiple bounces. avoids back and forth calculations of reflections. 
 
 Cornell box for testing global illumination algorithms. Popular, tested for radiosity and other.
 
-path tracing starts from the camera and traces rays into the scene. rays bounce off of objects and are absorbed or reflected. rays are traced until they hit a light source. explores all possible light paths.
-path tracing tries to find all possible light paths starting from light sources and ending at the camera. random sampling is used to find the light paths. path tracing is a brute force algorithm is cycles in blender.
-8 samples per pixel is noisy. expensive to compute as is per pixel. 1000 thousand still noise. 5k still see noise. 25k is good enough. overkill for realtime. 25k is crazy for offline rendering too.
+Path tracing starts from the camera and traces rays into the scene. rays bounce off of objects and are absorbed or reflected. rays are traced until they hit a light source. explores all possible light paths.
+path tracing tries to find all possible light paths starting from light sources and ending at the camera. Random sampling is used to find the light paths. Path tracing is a brute force algorithm that cycles in blender.
+8 samples per pixel is noisy. expensive to compute as is per pixel. 1000 thousand still noise. 5k still see noise. 25k is good enough. overkill for real time. 25k is crazy for offline rendering too.
 
 all we got in realtime rendering is 8 ms to 33 ms to produce an image. offline we can take hours to days to produce an image. for reducing pick paths intelligently. 
-we can favour paths that contribute more to the image. this is called importance sampling. we can use russian roulette to terminate paths that dont contribute much to the image, thats what path tracing does.
-Solution: Denoiser. You give noise image, few paths and it will give you a clean image. Uses principles about how global/"indirect" illumination works. makes assumptions based on neigbhoting pixels. 
+we can favor paths that contribute more to the image. This is called importance sampling. We can use russian roulette to terminate paths that don't contribute much to the image, that's what path tracing does.
+Solution: Denoiser. You give a noise image, a few paths and it will give you a clean image. Uses principles about how global/"indirect" illumination works. makes assumptions based on neighboring pixels. 
 USES THE SAMPLES OF THE NEIGHBORS FOR ESTIMATING LIGHTING OF CURRENT PIXEL. You consider more samples but you sample less. A bit blurish. Today we have AI denoisers. Use trained neural networks to denoise. We can use path tracing because of denoisers.
 
 The denoiser is just an approximation of the real image. It is not perfect. It is a tradeoff between quality and speed. 
@@ -32,15 +32,15 @@ Realism is in the details. Denoiser can remove some of the details.
 (voxel) cone tracing: ray tracing but with cones. mip mapping the voxels and then cone tracing for diffuse. smooth.
 
 another technique for global illumination: instant radiosity. "virtual lights": uses point lights to simulate light bounces. point lights are spawned/placed on surfaces where light bounces off.
-a virtual light is not a light per se but acts like a light source like the the moon, as sun iluminates it. virtual lights represent the reflected light, will take color they are on. any surface point that sees the original light is a potential light source.
+A virtual light is not a light per se but acts like a light source like the moon, as the sun illuminates it. virtual lights represent the reflected light, and will take the color they are on. any surface point that sees the original light is a potential light source.
 
-virtual lights will account for indirect illumination. light source: direct illumination, and the virtual lights account for indirect ilumination. this is for 1 bounce. for more bounces, we need more virtual lights.
-this is light tracing, not path tracing. we got rid of indirect illumnination by converting it to direct but now we have 500 light sources. solving indirect lightining by adding direct light sources.
+virtual lights will account for indirect illumination. light source: direct illumination, and the virtual lights account for indirect illumination. This is for 1 bounce. for more bounces, we need more virtual lights.
+This is light tracing, not path tracing. We got rid of indirect illumination by converting it to direct but now we have 500 light sources. solving indirect lighting by adding direct light sources.
 
-lightning grid hierarchy. real time global ilumination using virtual lights (light sources). low res lightning for far lights. high efficency.
+lightning grid hierarchy. real time global illumination using virtual lights (light sources). low res lightning for far lights. high efficiency.
 real time stochastic lightcuts. costly.
 
 precomputed global illumination: bake the lighting into the textures. lightmaps, light probes, etc. static objects only. not dynamic. gonna take offline time. if anything changes, you have to rebake. everything invalid.
-drastic changes is good enough, no rebake.
+drastic changes are good enough, no rebake.
 
 storing precomputed illuminations: light map. is a texture. baked. can be any resolution. or we can mip map it.
