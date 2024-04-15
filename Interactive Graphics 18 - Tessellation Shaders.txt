@@ -82,6 +82,6 @@ void main(){
     gl_Position = interpolate(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position); //if we want to interpolate between the vertices.
 }
 
-OUTER INNER TESSELLATION LEVELS > TESSELLATION > TRIANGLES, QUADS, ISOLINES
+OUTER INNER TESSELLATION LEVELS > TESSELLATION > TRIANGLES, QUADS, ISOLINES > positions
 
 ISOLINES FOR HAIR AND CURVES. ON THE FLY ON THE GPU.

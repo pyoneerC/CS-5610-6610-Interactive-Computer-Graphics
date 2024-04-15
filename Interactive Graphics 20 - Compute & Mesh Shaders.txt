@@ -1,0 +1,132 @@
+Compute Shader:
+
+We can use the pipeline to be a massive parallel thing, GPGPU.
+input > process > output (can be anything). We produce custom data. It's just data. we don't render anything, we don't need rasterization. We do all the computations in the fragment shader.
+using a rendering pipeline for non rendering. I'm only using a fragment shader.
+We end up with a compute shader only pipeline. We input things and output special things. we can put uniforms, buffers, etc. fs outputs color. shader storage buffer. SSO. we read and write from it. SSB and Images from read and write.
+We can use a computer shader to do anything. We can use it to do physics, AI, etc (mining bitcoin). SSB (unstructured)/Images (struct), read or write.
+images: no filtering/cheaper than textures. use it for not textures.
+using shaders for GPGPU.
+
+imageAtomicAdd
+imageAtomicExchange
+imageAtomicCompSwap
+imageAtomicMax
+
+for parallel computations.
+
+images in glsl are textures in OPENGL. image3d = GL_TEXTURE_3D we can load a cubemap as 6 different 2d images or 2 3d, upgrading.
+
+binding texture to image unit. image unit will be access to access the texture
+glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+there's no sampler, mipmapping, filtering, we directly access the texel.
+
+if we dont want images , enter a shader storage buffer. more generic.
+
+Shader Storage buffer: more flexible GL_SHADER_STORAGE_BUFFER
+Image: discretized image stored
+
+glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo); //bind ssbo to 0
+
+layout(std430, binding = 0) buffer ssb
+{
+    vec4 data[]; 
+} Mydata;
+
+Mydata.data[0] = vec4(1.0, 2.0, 3.0, 4.0);
+atomicAdd(Mydata.data[0].x, 1.0);
+
+GLuint program = glCreateProgram(GL_COMPUTE_SHADER);
+glShaderSource(program, 1, &source, NULL);
+glCompileShader(program);
+
+GLuint prog = glCreateProgram();
+glAttachShader(prog, program);
+glLinkProgram(prog);
+glUseProgram(prog);
+
+glDispatchCompute(1, 1, 1); //dispatch compute shader. 1x1x1 cells. 1 cell
+
+dispatch starts running compute shader, no drawcalls. use compute shaders for heavy math.
+glDispatchCompute(1, 1, groups_z); //groups of threads. The group has local storage, clubs. we can say the the rest must wait for this to finish for other things using barriers    > how much cells per program
+
+// wait for the compute shader to finish
+glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT); (latch in c++) (one use only, must be recalled later)
+
+groups_x, groups_y, groups_z. (THINK OF GROUPS AS A CELL). my workgroup distribution. 1D PROBLEMS, 1D GROUPS. 2D PROBLEMS, 2D GROUPS. 3D PROBLEMS, 3D GROUPS.
+
+Each cell has a group of threads, specified in 3d. x,y,z. 
+
+layout(local_size_x = 3, local_size_y = 4, local_size_z = 2) in; //workgroup size. 3x4x2 = 24 threads.                                                          > how much threads per cell
+
+group = collection of threads running on a collection of cores (gpu), access to the same local resources.
+
+if i have 32 threads in a gpu warp (collection of cores) i should have 32 threads in a cell for maximum performance.NVIDIA 32 threads per warp. AMD !!64!! threads per wavefront. cells run compute shaders.
+
+macros exposed in compute shaders:
+
+uvec3 gl_NumWorkGroups; //number of cells, same as dispatch calls.
+uvec3 gl_WorkGroupID; //cell id
+uvec3 gl_LocalInvocationID; //thread id in cell
+uvec3 gl_GlobalInvocationID; //thread id in global space
+
+where this workload is taking place. every cell/execution has access to all data.
+
+example compute shader:
+
+#version 430 core
+
+layout(std430, binding = 0) buffer ssb
+{
+    vec4 data[]; //where does this data come from?
+} outBuffer;
+
+layout(local_size_x = 3, local_size_y = 4, local_size_z = 2) in; // 3x4x2 = 24 threads
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+
+    outBuffer.data[index] = smoothstep(0.0, 1.0, sin(float(index))); //outputting data
+}
+
+A texture lives on the GPU, an image in RAM. 
+You can directly modify an image, but you can't modify textures without interacting with the GPU via opengl.
+
+Transferring data between the CPU and GPU is pretty slow so you want to use Textures where you can. The transfer from the GPU to the CPU is an operation called pixel transfer. Use gpu.
+
+compute shaders: wave simulation (water, fire, etc), physics simulation, AI, etc. for calculation positions, images, etc.
+
+openCL is a better option for GPGPU, but compute shaders are easier to use, runs on the same contexts. openCL is more powerful, but harder to use.
+
+mesh shader = vertex + geometry + tessellation shaders. The vertex pipeline is collapsed into a single stage. THIS IS A COMPUTE SHADER THAT OUTPUTS PRIMITIVES. can access uniform buffers textures (mydata)
+
+(no inputs)mesh shader > raster > fragment shader.
+vertex > tessellation > geometry > rasterizer > fragment shader. VTGRF
+                            (explosion of data/verts) 
+
+tasks shader (amplification shader) > mesh generation > mesh shader. TMgMs this is going to run on the level of post tessellator parallelism.
+
+// mesh shader draw colors
+
+glDrawMeshTasksNV(0, 1); //draw mesh tasks. 0, 1 = 1 task
+
+#version 450 
+
+#extension GL_NV_mesh_shader : require
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in; // the other 31 threads are not used in the warp.
+layout(triangles, max_vertices = 3, max_primitive = 1) out; //outputting 3 vertices, 1 triangle
+
+void main(){
+    gl_meshverticesnv[0].gl_Position = vec4(-1.0, -1.0, 0.0, 1.0); //vertex 1
+    gl_meshverticesnv[1].gl_Position = vec4(1.0, -1.0, 0.0, 1.0); //vertex 2
+    gl_meshverticesnv[2].gl_Position = vec4(0.0, 1.0, 0.0, 1.0); //vertex 3
+
+    gl_PrimitiveCountNV[0] = 1; 
+ 
+    gl_PrimitiveCountNV = 1;
+
+}
+
+proprocess the mesh before rendering in little ashes: meshlets. mesh shaders operate with this. culling on the fly (nvidia demo)
