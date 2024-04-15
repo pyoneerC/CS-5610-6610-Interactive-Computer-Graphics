@@ -1,38 +1,87 @@
-Solving the Right Problems for Engine Programmers - Mike Acton‌ (TGC 2017)
+x,y,z coordinates are 9 degrees of freedom. more subdivision, more degrees of freedom and possibilities. subdividing the triangle.
+subdivision is tessellation but also includes some rules on how vertices behave/interact with each other. like catmark. more subdivision, more detail.
+subdivision operation. applying tessellation. it's for complex, detailed shapes. if you subdivide a cube 9 million times nothing happens, ah yes, your pc dies.
+we can have multiple fragment shaders and vertex shaders. getting all data from dram is complicated, connection issue because there's so much data. i won't be able to feed my gpu fast enough, we can get around using tessellation,
+we send a low res model and we "upscale" it in the tesselation shader. we generate on the fly more triangles on the gpu, we don't feed the gpu this at the beginning, as this would be highly ineffective.
+geometry shader and tessellation shader are optional
 
-The skill is inferring purpose and constraints in code.
-Assume next people reading the codebase are smart, give them hints. They aren't idiots. 
-Shared resources tend to be bottlenecked, like memory. Design around it, don't abstract it.
-Know your tools, like compilers. Like a painter knows his brushes very well. What does it output? Can I change its output? YOU'RE RESPONSIBLE FOR THE OUTPUT OF THE TOOL. If you can't predict it, it gets in your way.
-When performance is a problem it's too late to fix it. Performance as you go.
-Everything is a data problem. Programs just transform data. If you don't understand the data (limits, how many, range, how likely to x, grouped), you don't understand the problem, and your solution will be wrong.
+if you can move enough data, generate/upscale it on the fly. TESSELLATION ON THE FLY ALLOWS FOR KIDS depending on x. small triangles don't generate pixels.
+TESSELLATION SHADER allows for having different resolutions of the model at relatively cheap cost. We can do tessellation in the geometry shader, but it's not as efficient as the tessellation shader. The tessellation shader is more performant.
+we can also tessellate down. invocations for parallelism. We need hardware support for doing tessellation shaders. 
 
-Sought skills: Understanding how OS works, read/write assembly fluently, experience with SIMD, how memory buses work.
-People lack practice, reasonable defaults and problem solving.
+tessellation shader = tessellation control shader +  tessellation (hardware, does the tessellation) + tessellation evaluation shader.
+                      hull shader               +       tessellation                             + domain shader (placement of vertices)
+                    tells tessellator what to do (parameters(numbers)/decisions(where an obj is in comparison to the camera, we need to transform it before
+                    resolutions on the vertices) +  will generate tessellated triangle + take each vertex, evaluate it and generate new vertex (vertex shader for tessellation)
 
-Gather CONTEXT, VALUE, COST, PLATFORM, DATA of the problem <--- 
-Understand how to solve the problem, reasonable defaults on how to approach problems and how to practice efficiently.
+                    what to do > do it > placement of vertices (NORMALLY GETS raw vertices data skipping the rest, where to place, output, gonna have access to the control)
 
-Explore gaps in knowledge and fix them. Get better. Not competitive. Practice, not a project, DAILY, plan it. Increment ++yourself.
-Shortcuts to first pass as engine programmer: Linear search through array, FIFO managed by incrementing integer, multiple by default, store by type, have constraints, estimates, version serialized data, visualize your target, LUTs.
+                      vertex shader > hull shader > tessellation > domain shader > geometry shader > fragment shader
+                      raw data      > vertices                                                    > pixels
 
-Solving problems is interactive: CONTEXT (THINGS THAT CAN BE ASSUMED KNOWN, MORE CONTEXT, BETTER. LESS GENERIC, LESS GENERAL, BE SPECIFIC), 
-VALUE (how much the problem is worth? $$$ || time, if you surpass negative ROI is not worth it.), 
-COST (OPPORTUNITY cost && MAINTENANCE (changing reqs, constraints, undertesting, infrastructure, dependency changes: any changes trigger maintenance costs, and changes trigger bugs and so on) cost then)
-PLATFORM (we can't abstract it. read the manuals. x64 v ARM. nvidia v ati. OpenGL v dx11. win v linux. caches. ram. hdd), DATA, (RULES, CONSTRAINTS). WRITE THEM DOWN.
-Also, know WHY you are solving the problem. Know how to pitch your idea/approach to others. EXPLAIN your value. What do we get when we solve the problem? 
-Set small goals for the problem and solve them. Plan ahead. Put things in your bag. Know the opportunity cost of everything.
-If you can't reason about maintenance cost, you are spending resources you don't have.
+                      transform your vertices early on on the vertex shader and then go to the tessellation evaluation shader. more efficient.
 
-WHAT IS THE PROBLEM HOW DO I SOLVE IT. DON'T FIT SOLUTIONS/PATTERNS. CONSIDER EVERYTHING. IDENTIFY USERS NEED. Describe goals in plain language.
-Solve the problem, not the symptom. Constraints: Iteration time, learning (research constraint), size (on disk and ram), speed, correctness. WHAT ARE THE ODDS OF X. Solving problems creates new ones. 
-Ask what if and measure its odds.
-What's the lifespan for my system? Futureproofing don't exist. The lifespan of code is 20 years max. Would you think of the same solution in 10 years? You get better. People always find a way. 
-Don't oversimplify the problem. Look where data comes from, all the way back to source; how long it takes to create things; how complex is the process? If it doesn't solve the problem, stop trying to fit it.
-We overcomplicate problems by making them too "generic". "Generic" usually is an excuse to not solve the problem, to not talk to users. YOUR JOB IS TO SOLVE PROBLEMS. Your time is your most valuable resource.
+                      you cannot program the tessellator. can output triangles, quads (some subdivisions are better represented with quads, quads dominant meshes, looks nicer, tessellation usually done with quads), and isolines. quads > triangles for rendering. but useful for modeling. The tessellator is effective with quads.
 
-Build vs buy. You need to reason about value and cost.
+isolines are just lines long parallel. liek hot maps.
+tessellation input: tessellation levels, doesn't care about p[osition or stuff.]
+along the shared edge WE MUST DO THE SAME DISCITIONS, otherwise we get cracks in the model (empty spaces)\
+rasterizer GIVES US FRAGMENTS.
 
-Gather data: Sample i/o, visualize, what is read and write? outliers, when is data accessed statistically relative to other data, what ranges are common, what data causes branches?
-Look out for unnecessary work. Stop doing it if it has no reason. 
+output of domain shader independent from hull shader.
 
+outer tessellation level = how many new vertices are generated on the edge of the triangle
+inner tessellation level = how many new vertices are generated inside the triangle
+OTL 6 1 6 0 ITL 5. DIFFERENT PER FACE DOMAIN SHADER WILL PLACE THIS VERTICES. VERTEX PER FAACE 5 2 7 0. 4. +1 
+ISOLINES ONLY OUTER TESSELLATION LEVEL. FLOATING POINT NUMBERS FOR TESSELLATION. fractional_even_spacing and odd. 
+
+OTL AND ITL are the outputs for the tessellator.
+
+glViewport(200,200,100,100);
+glScissor(200,200,100,100);
+glEnable(GL_SCISSOR_TEST);
+glClear(GL_COLOR_BUFFER_BIT);
+
+restrict the clears and all geometry to the viewport. after fragment shader.
+
+4.0 tessellation shaders were added. geometry shaders in 3.3 we need #version 410 coordinates
+
+// TESSELLATION SHADER USES PATCHES!! PRIMITIVES
+//glPatchParameteri(GL_PATCH_VERTICES, 3); //3 vertices per patch. we can have 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 vertices per patch
+layout(vertices = 3) out; //gonna output 3 vertices. it's gonna run 3 times, as it has 3 outputs.
+
+layout vertices == patch vertices in glPatchParameteri
+
+// its job is to set the tessellation parameters. HULL SHADER
+
+in vec3 myindata[]; //input data, 3 vertices from vertex shader.
+out vec3 mydata[]; //output data, 3 vertices to tessellation evaluation shader.
+
+void main(){
+    gl_TessLevelOuter[0] = 4.0; //edges, for first edge
+    gl_TessLevelOuter[1] = 4.0;// second
+    gl_TessLevelOuter[2] = 4.0;// 3rd
+    gl_TessLevelInner[0] = 4.0; //inside
+    mydata[gl_InvocationID] = myindata[gl_InvocationID]; //copy the input to the output. Each invocation sets one. control shader has access to previous hull shader execution.
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position; //copy the input to the output. Each invocation sets one. control shader has access to previous hull shader execution.
+}
+
+// DOMAIN SHADER (sets position of vertex i'm supposing to modify) == VERTEX SHADER
+
+layout(triangles, equal_spacing,ccw) in; //data from the tessellator.  The tessellator gives me triangles, equal spacing, counter clockwise.
+
+in vec3 mydata[]; //input data, 3 vertices from hull shader. I have access to all of the data.
+
+vec4 interpolate (vec4 a, vec4 b, vec4 c){
+    return a * gl_TessCoord.x + b * gl_TessCoord.y + c * gl_TessCoord.z; //barycentric coordinates. 3 vertices of the triangle. gl_TessCoord.x + gl_TessCoord.y + gl_TessCoord.z = 1.0
+}
+
+void main(){
+    gl_Position = (gl_TessCoord.x * gl_in[0].gl_Position) + (gl_TessCoord.y * gl_in[1].gl_Position) + (gl_TessCoord.z * gl_in[2].gl_Position); //barycentric coordinates. 3 vertices of the triangle. gl_TessCoord.x + gl_TessCoord.y + gl_TessCoord.z = 1.0
+    gl_Position = gl_in[0].gl_Position; //if we want to keep the original vertices.
+    gl_Position = interpolate(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position); //if we want to interpolate between the vertices.
+}
+
+OUTER INNER TESSELLATION LEVELS > TESSELLATION > TRIANGLES, QUADS, ISOLINES
+
+ISOLINES FOR HAIR AND CURVES. ON THE FLY ON THE GPU.

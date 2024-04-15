@@ -1,0 +1,38 @@
+Solving the Right Problems for Engine Programmers - Mike Acton‌ (TGC 2017)
+
+The skill is inferring purpose and constraints in code.
+Assume next people reading the codebase are smart, give them hints. They aren't idiots. 
+Shared resources tend to be bottlenecked, like memory. Design around it, don't abstract it.
+Know your tools, like compilers. Like a painter knows his brushes very well. What does it output? Can I change its output? YOU'RE RESPONSIBLE FOR THE OUTPUT OF THE TOOL. If you can't predict it, it gets in your way.
+When performance is a problem it's too late to fix it. Performance as you go.
+Everything is a data problem. Programs just transform data. If you don't understand the data (limits, how many, range, how likely to x, grouped), you don't understand the problem, and your solution will be wrong.
+
+Sought skills: Understanding how OS works, read/write assembly fluently, experience with SIMD, how memory buses work.
+People lack practice, reasonable defaults and problem solving.
+
+Gather CONTEXT, VALUE, COST, PLATFORM, DATA of the problem <--- 
+Understand how to solve the problem, reasonable defaults on how to approach problems and how to practice efficiently.
+
+Explore gaps in knowledge and fix them. Get better. Not competitive. Practice, not a project, DAILY, plan it. Increment ++yourself.
+Shortcuts to first pass as engine programmer: Linear search through array, FIFO managed by incrementing integer, multiple by default, store by type, have constraints, estimates, version serialized data, visualize your target, LUTs.
+
+Solving problems is interactive: CONTEXT (THINGS THAT CAN BE ASSUMED KNOWN, MORE CONTEXT, BETTER. LESS GENERIC, LESS GENERAL, BE SPECIFIC), 
+VALUE (how much the problem is worth? $$$ || time, if you surpass negative ROI is not worth it.), 
+COST (OPPORTUNITY cost && MAINTENANCE (changing reqs, constraints, undertesting, infrastructure, dependency changes: any changes trigger maintenance costs, and changes trigger bugs and so on) cost then)
+PLATFORM (we can't abstract it. read the manuals. x64 v ARM. nvidia v ati. OpenGL v dx11. win v linux. caches. ram. hdd), DATA, (RULES, CONSTRAINTS). WRITE THEM DOWN.
+Also, know WHY you are solving the problem. Know how to pitch your idea/approach to others. EXPLAIN your value. What do we get when we solve the problem? 
+Set small goals for the problem and solve them. Plan ahead. Put things in your bag. Know the opportunity cost of everything.
+If you can't reason about maintenance cost, you are spending resources you don't have.
+
+WHAT IS THE PROBLEM HOW DO I SOLVE IT. DON'T FIT SOLUTIONS/PATTERNS. CONSIDER EVERYTHING. IDENTIFY USERS NEED. Describe goals in plain language.
+Solve the problem, not the symptom. Constraints: Iteration time, learning (research constraint), size (on disk and ram), speed, correctness. WHAT ARE THE ODDS OF X. Solving problems creates new ones. 
+Ask what if and measure its odds.
+What's the lifespan for my system? Futureproofing don't exist. The lifespan of code is 20 years max. Would you think of the same solution in 10 years? You get better. People always find a way. 
+Don't oversimplify the problem. Look where data comes from, all the way back to source; how long it takes to create things; how complex is the process? If it doesn't solve the problem, stop trying to fit it.
+We overcomplicate problems by making them too "generic". "Generic" usually is an excuse to not solve the problem, to not talk to users. YOUR JOB IS TO SOLVE PROBLEMS. Your time is your most valuable resource.
+
+Build vs buy. You need to reason about value and cost.
+
+Gather data: Sample i/o, visualize, what is read and write? outliers, when is data accessed statistically relative to other data, what ranges are common, what data causes branches?
+Look out for unnecessary work. Stop doing it if it has no reason. 
+
