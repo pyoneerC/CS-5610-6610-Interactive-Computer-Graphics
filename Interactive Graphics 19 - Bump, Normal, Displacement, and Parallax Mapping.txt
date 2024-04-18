@@ -1,0 +1,41 @@
+PRETRUDING SURFACE NORMAL. bumps from the side at angle :) from above at angle :(  fake af. except displacement
+
+BUMP MAPPING:
+
+bump mapping > add geometric details without any geometry, without generating any triangles. 
+I think the best way to understand bump mapping is to think of it as a way to add detail to a surface without actually changing the geometry of the surface. 
+it achieve this by playing with the normals of the objects. there interpolated. not changing geometry, changing normals.
+the bumbmap is a greyscale. black is down, white is up. (height map)
+tessalated is very similar to bump map, bump map normally preserves shapes, dont deform, we need warping with it.
+bump mapping = cheap detail. realistic. looks much high res and worked than it actually is. take surface normal and tweak it a bit depending on the bump map. lerp. basically.
+you need to know how the heightmap changes, not just one value. based on that we modify, thats a bit expensive and annoying. we require a little bit more data than 1 point for a sweet lerp.
+we can store normals directly, im using height to find normal
+
+NORMAL MAPPING:
+
+newer, instead of pretruding at runtime by bumb map we precompute them by RGB scale. more exagerated, more control, more detail.
+i read any point and gives me the surface normal normal values will be on a sphere, normalized. local space.
+tangent and bitagent calculates with uv coordinates. red is preturbe on x, green is y, purple is z (in the normal map)
+normal mapping works well with small details, but not with large details. the ilusion breaks.
+used in offline render engines.  doing the orange instead of normal mapping would be a pain. faking geometry.
+we can edit textures in photoshop.
+
+bump map vs normal map: different. heightmap and normal map looks same. with bumb - HEIGHT TO NORMAL . with normal - RGB TO NORMAL (more freedom, new). Use normal maps. two different ways to modify the normals for shading.
+in some angles this effect breaks.
+
+DISPLACEMENT MAPPING: (involves tessalation). we need to modify SURFACE NORMALS && VERTICES. SO WE GOT DISPLACEMENT (VERTS) + NORMAL MAP (NORMALS). if not normal youll need to calculate at runtime.
+displacement map corresponds to the geometry i have, if we pump it off nothing happens . more res normal map better normals, indpeendent on geoemtric details.
+
+the more realistic and controllable, but its real performance struggle.
+heightmap! (or rgb for 3 axis, tangent, binormal) map but actually changes the geometry, actually a high res model. tessalation. more expensive. we can work from this real mesh. we need this for terrain for example, as we cant fake it.
+small details - normal map. large, real details - displacement map.
+
+PER PIXEL DISPLACEMENT MAPPING. OFFLLINE. APPLY DISPLACEMENT MAPPING, ZOOM, AND ALL GEOMETRIC DETAIL TO THE RES OF THE DISPLACEMENT`!!!!!!!!! EXPERNSIVE AF.
+PARALLAX MAPPING: (not used anymore). fake 3d effect. not used anymore. not realistic.
+similar to per pixel but approximation the displacement maps without new geometry, not paying the full cost of per pixel displacement. cheap. using lenght from dusplacement map and camera vector.
+approximating displaced surface w camera vector and fown vector, and straight. if you rotate the paralaxed map, it will break. not used anymore. distorted because its aN APPROXIMATION. cheap trick.
+steep parallel mapping: stepping, paralalx mapping but with limit between points. 0.0 > 1.0 goes to all steps, not as efficient. stop when i went far enough. better aproxximiation. stepping until we find the point w mesh. multiple reades, its shit expensive. still breaks rotating
+PARALLEX OCCLUSION MAPPING: STEEP + 1 STEP. APPROXIMATE LAST 2 POINTS FLATNESS. APRROXIMATES THE ACCUARATE MIDPOINT. SMOOTH OVER. THE BEST, THE MORE EXPENSIVE. PER PIXEL. STEEP + APPROXIMATION OF POINTS.
+PARALLAX MAPPING IN SURFACES FOR STAIRS!!!!!!!!!!!!!!!!!!!!!! :) ELDER SCROOLS PARALAX MAPPING IN WALLS ULTRA DETAIL. VERY PERFECT == UNREALISTIC. SHADOW + PARALLEX OCCLUSION MAPPING. PARAALX MAPPING COMO UN VIDRIO
+
+YOU CAN SEE MUL;TIPLE STEPS IN STEEP AND OCCLISOM PARALLAX. MORE STEPS THE BETTER.
