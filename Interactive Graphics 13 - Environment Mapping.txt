@@ -1,0 +1,37 @@
+environment mapping is making an "environment"
+
+static background rotates depending on my camera, can be faked.
+things that are far away that ill never to, but i would like a fallback so the scene is more beautiful.
+one way to do this is put the entire thing inside a sphere, and we put a texure in the inside -> hdri backdrops. it should be extra big so we dont go out of it. needs to be very big compared to the scene.
+view always originates at the center of the sphere. i only care about the direction i can find what point on the sphere that direction is looking. we acess the environment map using a direction
+direction -> texture coordinate. we could use latitude and longuitude. angular/light proble (around the edges these are distorted, information is clustered in the center). cubic mapping -> like forming a cube from scratch, the cross. his is from the gl tutorial 18. cubemap(ing). cubemaps are supported natively by gpu/api. gl has specific functions for this. see victor gl tutorial video 18. very easy to do. LEFT HANDED COORD SYSTEM. BIND AS A CUBEMAP AND AS 1 FACE. gonan do it 6 time. possitive z negeative z ... we can mipmap (generate mimpas, filter, linear) GL ENABLE GL TEXTURE CUBE MAP SEAMLESS. GPU WI;LL DO BILINEAR FILTERING 2 SAMPLES 1 FACE 2 SAMPLES OTHER FACE. NOT AS CHEAP. NICE QUALITY THO. MAKES EDGES SEAMLESS. OTHERWISE NOT.
+BIND TEXTURE AS CUBEMAP AND WE DONE
+
+UNIFORM SAMPLERCUBE env;
+
+color = texture(env, direction) //SAMP[LES COLOR NORMALZIED rgbs
+
+SPHERE CPULD MOVE WITH THE PINHOLE. SPHERE WILL BE IN VIRE MATRIX ORIGIN. sphere will need to be between near and far so we see the end xd. use depth buffer. WE DISABLE DEPTH MASK DO NOT WRITE ANYHTING TO THE DEPTH BUFFER
+
+gldepthmas false 
+this will not touch depth buffer. cubemap is cheap[er because tringulating the sphere is expensive. put cubemap at origin so it rotates with the xcamera. then we do frusum culling on the cube.
+
+canonical view volume = near clip (clip space) 1 1 -1 -1 1 -1 -1 1
+
+CUBEMAP + OBJECT = WASTED QUADS AND COMPUTATION, QUAD OVERDRAW. FWD RENDERING.
+
+USE SCISSORS TEST AROUND VIEWPORT!!!!!!!!!!!!
+
+DRAW TEAPOT, NO DEPTH, DRAW ENVIRONMENT SO NO OVERDRAW(NO DEPTH) AND REENABLE DEPTH. WILL ONLY RENDER VISIBLE PIXELS.
+
+DISABLE DEOTH TEST - DISABLE VISIBILITY AND DEPTH. TRIANGLE DRAW LAST WILL BE WRITTEN TO DEPTH BUFFER :( 1 BIG TRIANGLE.
+
+projection space = camera space to clip space
+inverse of the projection space = clip space to camera space.
+z 0.999 is far z-1 is near.
+inverse view matrix = world to camera is view matrix.
+true
+
+sampling the face depending on our =view diretion and we cna filter it, sample it, etc.
+
+BILINEAR FILTERING ACESS 4 TEXELS ALONG POS THAT I WANT. AT THE CORNER TEXELS MAY MIX AND ERRORS. ENABLE SEAMLESS.

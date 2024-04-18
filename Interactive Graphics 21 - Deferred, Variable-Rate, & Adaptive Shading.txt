@@ -1,47 +1,46 @@
-we can accelerate the pipeline by changing the data.
-they use less pixels and less gpu and then upscale the image wht dlss or high fidelity amd. thats highly effective.
+We can accelerate the pipeline by changing the data.
+they use less pixels and less gpu and then upscale the image to what dlss or high fidelity amd. That's highly effective.
 
-
-Forward Shading: Per primtive, lighting calculated for each triangle and then we shade them. If theres occlusion we're fucked, wasted effort. Traingles come in and we shade them and write colors to frame buffer.
-Deferred shading: Send triangle, BUT NOT SHADING JUST NOW. Get info BEFORE SHADING, then other triangle, will change some data, we retake notes. THIS IS THE FORWARD PASS (UNSHADED PRIMITIVES). G BUFFER. 
+Forward Shading: Per primitive, lighting calculated for each triangle and then we shade them. If theres occlusion we're fucked, wasted effort. Triangles come in and we shade them and write colors to the frame buffer.
+Deferred shading: Send triangle, BUT NOT SHADING JUST NOW. Get info BEFORE SHADING, then another triangle will change some data, we retake notes. THIS IS THE FORWARD PASS (UNSHADED PRIMITIVES). G BUFFER. 
 Pushes geometry. GBUFFER IS MADE HERE: ALBEDO, DIFFUSE, SPECULAR, Z BUFFER! (DEPTH), NORMALS, POSITIONS, THIS IS OUT NOTES WE TAKE, THE GBUFFER. LOTS OF INFO AND RENDER BUFFERS (TEXTURES). 
-fragments shader outputs the things of the gbuffer in the forward pass, then that is passed to the deffered pass. GBUFFERS will be in screensize, if youre rendering 4k, gbuffer textures will be 4k.
-when we shade the pixels, we must read the gbuffer and its resolution, if its high lots of bandwith. dont have many things in gpu. Gbuffer data can be compressed, and without it gbuffer can be a bottleneck, either reading opr writing. STENCIL BUFFER.
-normal x / y sotred as 16 bits integers. as compressed as possible. transparent objects dont go with deffered shadin:  render opaque and then rendering transparent using forward shading. 
-computation is deffered. putting all gbuffer togheter gets us the result after shading. then we post process. every bit counts. every bit allows me to do more, and consumes more milliseconds. deffered shading is much more efficient.
-bound on the fragment shader = using fs. if those geometry will get ocludded you wasted gpu time, processing and opportinuty cost.
-gbuffer all togheter is NOT THEW FINAL IMAGE. we lack other things and post processing. beyond certian distance we ignore the light. is key to cull the light. this allow to use more lights. few light sources will light the scene.
- generate farageements for the light source radius and then shade them. additive blending : combining textures on the fly with gbuffer. like head lightning.
- lot of light sourcesa are small. we use deferred hsading for boosting that. deffered shading is everywhere in games.
- AA becomes hard with deferred shading. BECAUSE ONE SHADING PER PIXEL IS ALIASING. we cna do better computing 1color thge puixel but 4 times the depth. MSAA. MORE DEPTH SAMPLES. SSAA is sampling per color. Shading is one time per triangle. not increasing shading cost. if there 2 triangles same pixel im gonna shade twice. but not 4. shading 4.
- WE GOT THE RBGA + Z PER PIXEL. IF I CONSIDER % OF triangles overlap with each pixel area, better aproximation: less aliasing. single sample at the center of the pixel wont work. SSAA : more sampling per pixel. x4 . 64 in offline rendering. x4 more expensive. 4x more sample. x4 deffered shading.
-Then is the deffered pass/light pass. We use what we render before as a TEXTURE for the fragment shader, and then we shade the pixels. More effective. Shading is done at the end.
+fragments shader outputs the things of the gbuffer in the forward pass, then that is passed to the deferred pass. GBUFFERS will be in screensize, if you're rendering 4k, gbuffer textures will be 4k.
+when we shade the pixels, we must read the gbuffer and its resolution, if it's high lots of bandwidth. don't have many things in gpu. Gbuffer data can be compressed, and without it gbuffer can be a bottleneck, either reading or writing. STENCIL BUFFER.
+normal x / y stored as 16 bits integers. as compressed as possible. transparent objects don't go with deferred shading:  render opaque and then render transparent using forward shading. 
+computation is deferred. putting all the gbuffer together gets us the result after shading. Then we post the process. every bit counts. every bit allows me to do more, and consumes more milliseconds. deferred shading is much more efficient.
+bound on the fragment shader = using fs. if those geometry will get occluded you wasted gpu time, processing and opportunity cost.
+gbuffer all together is NOT THE FINAL IMAGE. We lack other things and post processing. beyond a certain distance we ignore the light. is key to cull the light. This allows the use of more lights. a few light sources will light the scene.
+ generate fragments for the light source radius and then shade them. additive blending : combining textures on the fly with gbuffer. like head lightning.
+ a lot of light sources are small. We use deferred shading for boosting that. deferred shading is everywhere in games.
+ AA becomes hard with deferred shading. BECAUSE ONE SHADING PER PIXEL IS ALIASING. we can do better computing 1 color the pixel but 4 times the depth. MSAA. MORE DEPTH SAMPLES. SSAA is sampling per color. Shading is one time per triangle. not increasing shading cost. if there are 2 triangles in the same pixel I'm gonna shade twice. but not 4. shading 4.
+ WE GOT THE RGBA + Z PER PIXEL. IF I CONSIDER % OF triangles overlap with each pixel area, better approximation: less aliasing. a single sample at the center of the pixel won't work. SSAA : more sampling per pixel. x4 . 64 in offline rendering. x4 is more expensive. 4x more samples. x4 deferred shading.
+Then is the deferred pass/light pass. We use what we render before as a TEXTURE for the fragment shader, and then we shade the pixels. More effective. Shading is done at the end.
 
 Forward pass: geometry
 Deferred pass: Shading
 
-SUPORTED NAITEVLY:
+SUPPORTED NATIVELY:
 
-SSAA is brute force. shade every sample xN.
-MSAA clever. shade 1 sample per pixel. but more depth samples. > VARIABLE RATE SHADING VRS. MSA++. WE DO IT FOR SAMPLES OF MULTIPLE PIXELS. CLUSTERING ANTI ALIASING. SHADE ONCE PER CLUSTER. 1X1 SHADE EVERYTHING. 2X2 SHADE ONCE THEN NO THEN ONCE. 1X1 IS MSAA. 2X2 IS 2X2 BLOCKS. SHADING POSITION AT THE MIDDLE. EVERYONE GET THE SAME COLOR. LOOK SAMES, CHEAPER. WE USE SAMPLES AND WE SHADING PER CLUSTER.
-4X4 BLOCKS THAT GET THE SAME COLOR KINDA BAD THO. colors in pixel are same to their neighbors usually with landscapes and that, we can use VRS. artifacts can be hided easily. we can smudge and post process. specify shading rate per color in DX12 tier 1 or per rpimitive in tier 2. image based one. we need to specify shading rate. vrs use 8 by 8 blocks we can shading rate. user can give parameters.
+SSAA is a brute force. shade every sample xN.
+MSAA is clever. shade 1 sample per pixel. but more depth samples. > VARIABLE RATE SHADING VRS. MSA++. WE DO IT FOR SAMPLES OF MULTIPLE PIXELS. CLUSTERING ANTI ALIASING. SHADE ONCE PER CLUSTER. 1X1 SHADE EVERYTHING. 2X2 SHADE ONCE THEN NO THEN ONCE. 1X1 IS MSAA. 2X2 IS 2X2 BLOCKS. SHADING POSITION AT THE MIDDLE. EVERYONE GETS THE SAME COLOR. LOOK SAMES, CHEAPER. WE USE SAMPLES AND WE SHADING PER CLUSTER.
+4X4 BLOCKS THAT GET THE SAME COLOR KINDA BAD THO. colors in pixels are the same as their neighbors usually with landscapes and that, we can use VRS. artifacts can be hidden easily. we can smudge and post-process. specify shading rate per color in DX12 tier 1 or per primitive in tier 2. image based one. We need to specify the shading rate. vrs use 8 by 8 blocks we can shading rate. users can give parameters.
 
 
-vrs can be used with deffered shading but works better with forward shading. same edge with forward shading. edges are preserved with VRS and works better with large triangles. multiples shades per group.
+vrs can be used with deferred shading but works better with forward shading. same edge with forward shading. edges are preserved with VRS and works better with large triangles. multiples shades per group.
 
-1 samsple per pixel with deffered shading? WE CANT DO ANTIALIASING.
+1 sample per pixel with deferred shading? WE CAN'T DO ANTIALIASING.
 
-incompatible with deffered shading. there other methods
+incompatible with deferred shading. there other methods
 
 TAA: temporal anti aliasing
 FXAA: fast approximate anti aliasing 
 SMAA: subpixel morphological anti aliasing. blending colors of neighboring pixels.
 
-TAA: Temprola AA. Looks at previous frame at looks how it difer. then it blends the pixels jitters a bit the camera, SOME VARIUATION, you dont notice. blend colors of previous frame. THE STANDARD. 
+TAA: Temporal AA. Look at the previous frame and see how it differs. then it blends the pixels jitters a bit the camera, SOME VARIATION, you don't notice. blend colors of the previous frame. THE STANDARD. 
 
-we can interpolate the unshaded pixels with the shaded pixlels ADAPTIVE ANTIALIASING. VERY EFFECTIVE. 
+we can interpolate the unshaded pixels with the shaded pixels ADAPTIVE ANTI ALIASING. VERY EFFECTIVE. 
 
-DISIIMILAR? SHADE 
+DISSIMILAR? SHADE 
 SIMILAR? INTERPOLATE THEM
 
 DACS > VRS.
